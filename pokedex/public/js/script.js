@@ -1,0 +1,163 @@
+// Función para mostrar la información del Pokémon en el HTML
+function displayPokemonInfo(pokemon, imageUrl, baseStats) {
+    clearErrorMessage();
+
+    const pokemonInfo = document.getElementById('pokemonInfo');
+
+    // Muestra la imagen principal del Pokémon si está disponible
+    const mainImage = imageUrl ? `<img src="${imageUrl}" alt="${pokemon.name}" class="main-image" />` : '';
+
+    // Aplica colores a cada tipo
+    const typeColors = {
+        normal: '#A8A77A',
+        fire: '#EE8130',
+        water: '#6390F0',
+        electric: '#F7D02C',
+        grass: '#7AC74C',
+        ice: '#96D9D6',
+        fighting: '#C22E28',
+        poison: '#A33EA1',
+        ground: '#E2BF65',
+        flying: '#A98FF3',
+        psychic: '#F95587',
+        bug: '#A6B91A',
+        rock: '#B6A136',
+        ghost: '#735797',
+        dragon: '#6F35FC',
+        dark: '#705746',
+        steel: '#B7B7CE',
+        fairy: '#D685AD',
+    };
+
+    // Muestra los tipos del Pokémon con colores
+    const typesList = pokemon.types.map(type => `<span style="background-color: ${typeColors[type.type.name.toLowerCase()] || '#777'}; color: white; padding: 5px; border-radius: 5px; margin: 0 5px;">${capitalizeFirstLetter(type.type.name)}</span>`).join('');
+
+    // Muestra las habilidades del Pokémon (marca las ocultas)
+    const abilitiesList = pokemon.abilities
+        .map(a => {
+            const name = capitalizeFirstLetter(a.ability.name.replace(/-/g, ' '));
+            return a.is_hidden ? `${name} (oculta)` : name;
+        })
+        .join(', ');
+
+    // La API entrega altura en decímetros y peso en hectogramos
+    const heightM = (pokemon.height / 10).toFixed(1);
+    const weightKg = (pokemon.weight / 10).toFixed(1);
+
+    // Número de Pokédex con formato #025
+    const dexNumber = `#${String(pokemon.id).padStart(3, '0')}`;
+
+    // Muestra las estadísticas base del Pokémon
+    const statsList = Object.entries(baseStats).map(([statName, statValue]) => `<li>${formatStatName(statName)}: ${statValue}</li>`).join('');
+
+    // Construye la estructura HTML
+    const pokemonDetailsHTML = `
+        <p id="pokemonName">Name: ${capitalizeFirstLetter(pokemon.name)} <span class="dex-number">${dexNumber}</span></p>
+        <p id="pokemonTypes">Types: ${typesList}</p>
+        ${mainImage}
+        <div class="pokemon-meta">
+            <span>Height: ${heightM} m</span>
+            <span>Weight: ${weightKg} kg</span>
+            <span>Abilities: ${abilitiesList}</span>
+        </div>
+        <p id="totalStats">Base Stats:</p>
+        <ul>
+            ${statsList}
+            <li>Total: ${calculateTotal(baseStats)}</li>
+        </ul>
+    `;
+
+    // Aplica la estructura HTML al contenedor
+    pokemonInfo.innerHTML = pokemonDetailsHTML;
+}
+
+// Función para capitalizar la primera letra de cada palabra
+function capitalizeFirstLetter(str) {
+    return str.replace(/\b\w/g, match => match.toUpperCase());
+}
+
+function formatStatName(statName) {
+    // Separa las palabras y las capitaliza
+    const words = statName.split(/(?=[A-Z])/);
+    const formattedName = words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+    return formattedName;
+}
+
+// Función para calcular el total de los puntos base
+function calculateTotal(baseStats) {
+    // Sumar todos los puntos base
+    return Object.values(baseStats).reduce((total, stat) => total + (stat || 0), 0);
+}
+
+// Función para limpiar el contenido HTML actual
+function clearPokemonInfo() {
+    const pokemonInfo = document.getElementById('pokemonInfo');
+    pokemonInfo.innerHTML = '';
+}
+
+// Función para mostrar un estado de carga mientras se busca
+function displayLoading(name) {
+    clearErrorMessage();
+    const pokemonInfo = document.getElementById('pokemonInfo');
+    pokemonInfo.innerHTML = `<div class="loading">Buscando a ${capitalizeFirstLetter(name)}…</div>`;
+}
+
+// Función para mostrar mensajes de error en el HTML
+function displayErrorMessage(message) {
+    const errorElement = document.getElementById('errorMessage');
+    errorElement.textContent = message;
+}
+
+// Función para limpiar mensajes de error en el HTML
+function clearErrorMessage() {
+    const errorElement = document.getElementById('errorMessage');
+    errorElement.textContent = '';
+}
+
+// Función auxiliar para extraer estadísticas del objeto de Pokémon
+function getPokemonStat(pokemonData, statName) {
+    const stat = pokemonData.stats.find(stat => stat.stat.name === statName);
+    return stat ? stat.base_stat : null;
+}
+
+// Obtiene y muestra la información del Pokémon a partir de su nombre
+async function getPokemonByName(name) {
+    displayLoading(name);
+
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+
+        if (response.status === 404) {
+            throw new Error('not-found');
+        }
+        if (!response.ok) {
+            throw new Error('request-failed');
+        }
+
+        const pokemon = await response.json();
+
+        // Preferimos el artwork oficial (más grande); si no, caemos al sprite clásico
+        const imageUrl = pokemon.sprites?.other?.['official-artwork']?.front_default || pokemon.sprites?.front_default;
+
+        // Estadísticas base a partir de la misma respuesta (sin una segunda llamada a la API)
+        const baseStats = {
+            hp: getPokemonStat(pokemon, 'hp'),
+            ataque: getPokemonStat(pokemon, 'attack'),
+            defensa: getPokemonStat(pokemon, 'defense'),
+            ataqueEspecial: getPokemonStat(pokemon, 'special-attack'),
+            defensaEspecial: getPokemonStat(pokemon, 'special-defense'),
+            velocidad: getPokemonStat(pokemon, 'speed'),
+        };
+
+        displayPokemonInfo(pokemon, imageUrl, baseStats);
+    } catch (error) {
+        clearPokemonInfo();
+        if (error.message === 'not-found') {
+            displayErrorMessage(`El Pokémon "${name}" no existe. Revisá que esté bien escrito.`);
+        } else {
+            displayErrorMessage('Ocurrió un error al buscar. Revisá tu conexión e intentá de nuevo.');
+            console.error('Error al obtener información del Pokémon:', error);
+        }
+    }
+}
