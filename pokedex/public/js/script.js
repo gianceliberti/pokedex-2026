@@ -7,8 +7,20 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
 
     const pokemonInfo = document.getElementById('pokemonInfo');
 
+    // URLs para el toggle shiny y para el sonido (cry) del Pokémon
+    const shinyImageUrl = pokemon.sprites?.other?.['official-artwork']?.front_shiny || pokemon.sprites?.front_shiny || null;
+    const cryUrl = pokemon.cries?.latest || pokemon.cries?.legacy || null;
+
     // Muestra la imagen principal del Pokémon si está disponible
-    const mainImage = imageUrl ? `<img src="${imageUrl}" alt="${pokemon.name}" class="main-image" />` : '';
+    const mainImage = imageUrl ? `<img src="${imageUrl}" alt="${pokemon.name}" class="main-image" id="mainSprite" />` : '';
+
+    // Controles de la imagen: reproducir el sonido y ver la versión shiny
+    const spriteControls = `
+        <div class="sprite-controls">
+            <button id="cryButton" type="button" class="sprite-btn"${cryUrl ? '' : ' disabled'}>🔊 Sonido</button>
+            <label class="shiny-label"><input type="checkbox" id="shinyToggle"${shinyImageUrl ? '' : ' disabled'} /> ✨ Shiny</label>
+        </div>
+    `;
 
     // Aplica colores a cada tipo
     const typeColors = {
@@ -58,6 +70,7 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
         <p id="pokemonName">Name: ${capitalizeFirstLetter(pokemon.name)} <span class="dex-number">${dexNumber}</span></p>
         <p id="pokemonTypes">Types: ${typesList}</p>
         ${mainImage}
+        ${spriteControls}
         <div class="pokemon-meta">
             <span>Height: ${heightM} m</span>
             <span>Weight: ${weightKg} kg</span>
@@ -85,6 +98,25 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
     const inputElement = document.getElementById('pokemonName');
     if (inputElement) {
         inputElement.value = pokemon.name;
+    }
+
+    // Botón de sonido: reproduce el "cry" del Pokémon
+    const cryButton = document.getElementById('cryButton');
+    if (cryButton && cryUrl) {
+        cryButton.addEventListener('click', () => {
+            const audio = new Audio(cryUrl);
+            audio.volume = 0.5;
+            audio.play().catch(error => console.error('No se pudo reproducir el sonido:', error));
+        });
+    }
+
+    // Toggle shiny: intercambia entre la imagen normal y la variocolor
+    const shinyToggle = document.getElementById('shinyToggle');
+    const spriteImg = document.getElementById('mainSprite');
+    if (shinyToggle && spriteImg) {
+        shinyToggle.addEventListener('change', () => {
+            spriteImg.src = shinyToggle.checked ? (shinyImageUrl || imageUrl) : imageUrl;
+        });
     }
 
     // Conecta los botones de navegación anterior/siguiente por número
