@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pokedex-2026",
+  "compatibility_date": "2026-08-02",
+  // Sitio 100% estático: servimos la carpeta del pokedex como assets (no hay código de Worker)
+  "assets": {
+    "directory": "pokedex/public"
+  }
+}
