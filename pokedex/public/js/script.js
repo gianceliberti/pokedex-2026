@@ -1,3 +1,6 @@
+// Guarda el número del Pokémon mostrado, para la navegación anterior/siguiente
+let currentPokemonId = null;
+
 // Función para mostrar la información del Pokémon en el HTML
 function displayPokemonInfo(pokemon, imageUrl, baseStats) {
     clearErrorMessage();
@@ -65,15 +68,35 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
             ${statsList}
             <li>Total: ${calculateTotal(baseStats)}</li>
         </ul>
+        <div class="pokemon-nav">
+            <button id="prevPokemon" ${pokemon.id <= 1 ? 'disabled' : ''}>◀ Anterior</button>
+            <button id="nextPokemon">Siguiente ▶</button>
+        </div>
     `;
 
     // Aplica la estructura HTML al contenedor
     pokemonInfo.innerHTML = pokemonDetailsHTML;
+
+    // Mantiene el buscador en sync con lo que se muestra (nombre canónico)
+    const inputElement = document.getElementById('pokemonName');
+    if (inputElement) {
+        inputElement.value = pokemon.name;
+    }
+
+    // Conecta los botones de navegación anterior/siguiente por número
+    const prevButton = document.getElementById('prevPokemon');
+    const nextButton = document.getElementById('nextPokemon');
+    if (prevButton) {
+        prevButton.addEventListener('click', () => loadPokemon(pokemon.id - 1));
+    }
+    if (nextButton) {
+        nextButton.addEventListener('click', () => loadPokemon(pokemon.id + 1));
+    }
 }
 
 // Función para capitalizar la primera letra de cada palabra
 function capitalizeFirstLetter(str) {
-    return str.replace(/\b\w/g, match => match.toUpperCase());
+    return String(str).replace(/\b\w/g, match => match.toUpperCase());
 }
 
 function formatStatName(statName) {
@@ -97,10 +120,10 @@ function clearPokemonInfo() {
 }
 
 // Función para mostrar un estado de carga mientras se busca
-function displayLoading(name) {
+function displayLoading(label) {
     clearErrorMessage();
     const pokemonInfo = document.getElementById('pokemonInfo');
-    pokemonInfo.innerHTML = `<div class="loading">Buscando a ${capitalizeFirstLetter(name)}…</div>`;
+    pokemonInfo.innerHTML = `<div class="loading">Buscando a ${capitalizeFirstLetter(label)}…</div>`;
 }
 
 // Función para mostrar mensajes de error en el HTML
@@ -121,12 +144,12 @@ function getPokemonStat(pokemonData, statName) {
     return stat ? stat.base_stat : null;
 }
 
-// Obtiene y muestra la información del Pokémon a partir de su nombre
-async function getPokemonByName(name) {
-    displayLoading(name);
+// Obtiene y muestra un Pokémon a partir de su nombre o su número
+async function loadPokemon(identifier) {
+    displayLoading(String(identifier));
 
     try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${String(identifier).toLowerCase()}`);
 
         if (response.status === 404) {
             throw new Error('not-found');
@@ -136,6 +159,7 @@ async function getPokemonByName(name) {
         }
 
         const pokemon = await response.json();
+        currentPokemonId = pokemon.id;
 
         // Preferimos el artwork oficial (más grande); si no, caemos al sprite clásico
         const imageUrl = pokemon.sprites?.other?.['official-artwork']?.front_default || pokemon.sprites?.front_default;
@@ -154,10 +178,15 @@ async function getPokemonByName(name) {
     } catch (error) {
         clearPokemonInfo();
         if (error.message === 'not-found') {
-            displayErrorMessage(`El Pokémon "${name}" no existe. Revisá que esté bien escrito.`);
+            displayErrorMessage(`El Pokémon "${identifier}" no existe. Revisá que esté bien escrito.`);
         } else {
             displayErrorMessage('Ocurrió un error al buscar. Revisá tu conexión e intentá de nuevo.');
             console.error('Error al obtener información del Pokémon:', error);
         }
     }
+}
+
+// Se mantiene por compatibilidad con eventListeners.js (búsqueda por nombre)
+async function getPokemonByName(name) {
+    await loadPokemon(name);
 }

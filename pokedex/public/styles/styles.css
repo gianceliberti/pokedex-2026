@@ -136,3 +136,31 @@ img {
     font-size: 18px;
     color: #555;
 }
+
+/* Navegación anterior / siguiente por número */
+.pokemon-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.pokemon-nav button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pokemon-nav button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.pokemon-nav button:disabled {
+    background-color: #b0bec5;
+    cursor: not-allowed;
+}

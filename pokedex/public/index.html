@@ -18,7 +18,8 @@
         <!-- Nueva entrada para el nombre del Pokémon -->
         <div class="form-group">
             <label for="pokemonName">Search Pokémon by Name:</label>
-            <input type="text" class="form-control" id="pokemonName">
+            <input type="text" class="form-control" id="pokemonName" list="pokemonList" autocomplete="off">
+            <datalist id="pokemonList"></datalist>
         </div>
         
         <button id="searchByName" class="btn btn-primary">Search</button>
