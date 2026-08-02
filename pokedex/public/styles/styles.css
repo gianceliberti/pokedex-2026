@@ -83,6 +83,46 @@ h1 {
     width: 100%;
 }
 
+/* ===== Autocompletado propio (reemplaza al <datalist> nativo) ===== */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    /* Altura acotada + scroll: nunca tapa todo el site */
+    max-height: 240px;
+    overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    text-align: left;
+}
+
+.autocomplete-list.open {
+    display: block;
+}
+
+.autocomplete-item {
+    padding: 8px 14px;
+    cursor: pointer;
+    color: #2c3e50;
+    text-transform: capitalize;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background-color: rgba(0, 123, 255, 0.15);
+}
+
 #pokemonInfo {
     margin-top: 20px;
     border-top: 2px solid #007bff;
@@ -305,6 +345,22 @@ img {
     .form-control:focus {
         background-color: rgba(255, 255, 255, 0.12);
         color: #ffffff;
+    }
+
+    /* Desplegable del autocompletado en oscuro */
+    .autocomplete-list {
+        background-color: rgba(28, 32, 44, 0.92);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .autocomplete-item {
+        color: #e8eaed;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background-color: rgba(77, 144, 254, 0.28);
     }
 
     label {
