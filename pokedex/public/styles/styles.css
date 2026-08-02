@@ -31,11 +31,11 @@
 }
 
 #pokemonInfo ul li:nth-child(even) {
-    background-color: #f2f2f2;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 #pokemonInfo ul li:nth-child(odd) {
-    background-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.25);
 }
 
 #pokemonInfo ul li:last-child {
@@ -61,15 +61,18 @@ h1 {
 
 
 .container {
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-top: 20px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center; 
+    /* Vidrio esmerilado: semitransparente + desenfoque para ver el fondo sin perder legibilidad */
+    background-color: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    padding: 24px;
+    margin: 20px auto;
+    width: 92%;
+    max-width: 460px;
+    text-align: center;
 }
 
 .form-group {
@@ -271,4 +274,80 @@ img {
 .pokemon-nav button:disabled {
     background-color: #b0bec5;
     cursor: not-allowed;
+}
+
+/* ===================== Modo oscuro ===================== */
+/* Panel oscuro translúcido hecho a propósito, en lugar de que el navegador
+   invierta el blanco a negro de forma cruda. */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(to right, #1b2a4a, #0a1122);
+    }
+
+    .container {
+        background-color: rgba(22, 26, 38, 0.62);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+        color: #e8eaed;
+    }
+
+    /* Buscador */
+    .form-control {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #e8eaed;
+    }
+
+    .form-control::placeholder {
+        color: #9aa0a6;
+    }
+
+    .form-control:focus {
+        background-color: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+    }
+
+    label {
+        color: #cfd6dd;
+    }
+
+    /* Textos dentro de la ficha */
+    .pokemon-meta,
+    .shiny-label,
+    .evolution-title {
+        color: #cfd6dd;
+    }
+
+    .dex-number,
+    .evolution-none {
+        color: #9aa0a6;
+    }
+
+    #pokemonInfo p {
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Filas de estadísticas */
+    #pokemonInfo ul li:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    #pokemonInfo ul li:nth-child(odd) {
+        background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Cadena de evolución */
+    .evo-item {
+        background-color: rgba(255, 255, 255, 0.08);
+        color: #e8eaed;
+    }
+
+    .evo-item:hover {
+        background-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .evo-item.current {
+        background-color: rgba(41, 121, 255, 0.25);
+        border-color: #4d90fe;
+    }
 }
