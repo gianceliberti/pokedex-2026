@@ -44,6 +44,14 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
         fairy: '#D685AD',
     };
 
+    // Acento del panel según el tipo primario del Pokémon (Charizard→naranja, Gengar→morado…)
+    const primaryType = pokemon.types[0]?.type?.name?.toLowerCase();
+    const accentColor = typeColors[primaryType] || '#007bff';
+    const containerElement = document.querySelector('.container');
+    if (containerElement) {
+        containerElement.style.setProperty('--type-color', accentColor);
+    }
+
     // Muestra los tipos del Pokémon con colores
     const typesList = pokemon.types.map(type => `<span style="background-color: ${typeColors[type.type.name.toLowerCase()] || '#777'}; color: white; padding: 5px; border-radius: 5px; margin: 0 5px;">${capitalizeFirstLetter(type.type.name)}</span>`).join('');
 
