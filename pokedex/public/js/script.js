@@ -68,6 +68,10 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
             ${statsList}
             <li>Total: ${calculateTotal(baseStats)}</li>
         </ul>
+        <div id="evolutionChain" class="evolution-chain">
+            <p class="evolution-title">Evolución</p>
+            <p class="evolution-none">Cargando…</p>
+        </div>
         <div class="pokemon-nav">
             <button id="prevPokemon" ${pokemon.id <= 1 ? 'disabled' : ''}>◀ Anterior</button>
             <button id="nextPokemon">Siguiente ▶</button>
@@ -144,6 +148,102 @@ function getPokemonStat(pokemonData, statName) {
     return stat ? stat.base_stat : null;
 }
 
+// Extrae el número (id) desde una URL de especie de la API
+function idFromSpeciesUrl(url) {
+    const match = url.match(/\/pokemon-species\/(\d+)\/?$/);
+    return match ? parseInt(match[1], 10) : null;
+}
+
+// Recorre la cadena de evolución y la agrupa por niveles.
+// Ej. lineal: [[bulbasaur], [ivysaur], [venusaur]]
+// Ej. ramificada (eevee): [[eevee], [vaporeon, jolteon, flareon, ...]]
+function getEvolutionLevels(chain) {
+    const levels = [];
+    let current = [chain];
+
+    while (current.length > 0) {
+        const level = current.map(node => ({
+            name: node.species.name,
+            id: idFromSpeciesUrl(node.species.url),
+        }));
+        levels.push(level);
+
+        const next = [];
+        current.forEach(node => (node.evolves_to || []).forEach(child => next.push(child)));
+        current = next;
+    }
+
+    return levels;
+}
+
+// Dibuja la cadena de evolución (con mini-sprites clicables) dentro del contenedor
+function renderEvolutionChain(container, levels, currentId) {
+    if (levels.length <= 1) {
+        container.innerHTML = '<p class="evolution-title">Evolución</p><p class="evolution-none">Este Pokémon no evoluciona.</p>';
+        return;
+    }
+
+    const levelsHTML = levels
+        .map(level => {
+            const items = level
+                .map(p => {
+                    const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+                    const currentClass = p.id === currentId ? ' current' : '';
+                    return `
+                        <button class="evo-item${currentClass}" data-id="${p.id}" title="Ver ${capitalizeFirstLetter(p.name)}">
+                            <img src="${spriteUrl}" alt="${p.name}" />
+                            <span>${capitalizeFirstLetter(p.name)}</span>
+                        </button>`;
+                })
+                .join('');
+            return `<div class="evo-level">${items}</div>`;
+        })
+        .join('<span class="evo-arrow">→</span>');
+
+    container.innerHTML = `<p class="evolution-title">Evolución</p><div class="evo-row">${levelsHTML}</div>`;
+
+    // Al hacer click en una evolución, se navega a ese Pokémon
+    container.querySelectorAll('.evo-item').forEach(button => {
+        button.addEventListener('click', () => loadPokemon(parseInt(button.dataset.id, 10)));
+    });
+}
+
+// Obtiene y muestra la cadena de evolución (2 llamadas extra: species + evolution-chain).
+// Se ejecuta aparte para no bloquear el render de la ficha principal.
+async function loadEvolutionChain(pokemon) {
+    const container = document.getElementById('evolutionChain');
+    if (!container) {
+        return;
+    }
+
+    try {
+        const speciesResponse = await fetch(pokemon.species.url);
+        if (!speciesResponse.ok) {
+            throw new Error('species-failed');
+        }
+        const species = await speciesResponse.json();
+
+        const evolutionResponse = await fetch(species.evolution_chain.url);
+        if (!evolutionResponse.ok) {
+            throw new Error('evolution-failed');
+        }
+        const evolutionData = await evolutionResponse.json();
+
+        // Evita pisar la ficha si el usuario ya navegó a otro Pokémon
+        if (currentPokemonId !== pokemon.id) {
+            return;
+        }
+
+        const levels = getEvolutionLevels(evolutionData.chain);
+        renderEvolutionChain(container, levels, pokemon.id);
+    } catch (error) {
+        console.error('No se pudo cargar la cadena de evolución:', error);
+        if (currentPokemonId === pokemon.id) {
+            container.innerHTML = '<p class="evolution-title">Evolución</p><p class="evolution-none">No se pudo cargar la evolución.</p>';
+        }
+    }
+}
+
 // Obtiene y muestra un Pokémon a partir de su nombre o su número
 async function loadPokemon(identifier) {
     displayLoading(String(identifier));
@@ -175,6 +275,9 @@ async function loadPokemon(identifier) {
         };
 
         displayPokemonInfo(pokemon, imageUrl, baseStats);
+
+        // La evolución se carga aparte y se completa cuando llega (no bloquea la ficha)
+        loadEvolutionChain(pokemon);
     } catch (error) {
         clearPokemonInfo();
         if (error.message === 'not-found') {
