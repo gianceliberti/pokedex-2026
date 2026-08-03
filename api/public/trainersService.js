@@ -7,12 +7,15 @@ exports.getTrainerById = (id) => trainersData.find(trainer => trainer.id === id)
 
 exports.addTrainer = ({ id, name, ...newTrainer }) => {
   try {
-    if (!id || !name) {
-      throw new Error('Both ID and name are required.');
+    if (!name) {
+      throw new Error('Name is required.');
     }
 
-    // Crear el nuevo entrenador con el nuevo ID y nombre
-    const trainer = { id, name, ...newTrainer };
+    // Si no se pasa id, se genera automáticamente (max + 1)
+    const newId = id || (trainersData.length ? Math.max(...trainersData.map(trainer => trainer.id)) + 1 : 1);
+
+    // Crear el nuevo entrenador
+    const trainer = { id: newId, name, ...newTrainer };
 
     // Agregar el nuevo entrenador a la lista
     trainersData.push(trainer);

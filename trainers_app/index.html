@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trainers App</title>
-    <!-- Agrega el enlace a Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
             background: linear-gradient(to right, #4b6cb7, #182848);
@@ -14,9 +14,8 @@
         h1 {
             text-align: center;
             margin-top: 30px;
-            color: #007bff;
+            color: #ffffff;
         }
-
 
         .container {
             background-color: #ffffff;
@@ -27,36 +26,210 @@
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            text-align: center; /* Centra el contenido */
         }
 
         .form-group {
             margin-bottom: 15px;
         }
 
-    </style>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        .add-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
 
+        .add-form input {
+            flex: 1;
+        }
+
+        .count {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .trainers-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .trainer-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            background-color: #f2f4f7;
+        }
+
+        .trainer-id {
+            color: #7f8c8d;
+            font-size: 13px;
+            min-width: 38px;
+        }
+
+        .trainer-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .empty {
+            color: #7f8c8d;
+            text-align: center;
+            padding: 14px;
+        }
+    </style>
 </head>
 <body>
     <h1>Trainer Information</h1>
-    
-    <div class="container">
-        <!-- Nueva entrada para el nombre del Pokémon -->
-        <div class="form-group">
-            <label for="trainerName">Search trainer by Name:</label>
-            <input type="text" class="form-control" id="trainerName">
-        </div>
-        
-        <button id="searchByName" class="btn btn-primary">Search</button>
 
-        <div id="errorMessage" style="color: red;"></div>
-        <div id="trainerInfo"></div>
+    <div class="container">
+        <!-- Buscar (filtra la lista en vivo) -->
+        <div class="form-group">
+            <label for="trainerName">Buscar entrenador por nombre:</label>
+            <input type="text" class="form-control" id="trainerName" placeholder="Ej: Red" autocomplete="off">
+        </div>
+
+        <!-- Agregar un entrenador -->
+        <div class="add-form">
+            <input type="text" class="form-control" id="newTrainerName" placeholder="Nombre del nuevo entrenador" autocomplete="off">
+            <button id="addTrainer" class="btn btn-success">Agregar</button>
+        </div>
+
+        <div id="errorMessage" style="color: #e74c3c;"></div>
+        <div class="count" id="trainerCount"></div>
+        <ul class="trainers-list" id="trainersList"></ul>
     </div>
-    
-    <!-- Agrega el enlace a Bootstrap JS y Popper.js al final del cuerpo del documento -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // La API de entrenadores corre en el puerto 3001
+        const API_URL = 'http://localhost:3001/api/trainers';
+
+        let allTrainers = [];
+
+        const listElement = document.getElementById('trainersList');
+        const countElement = document.getElementById('trainerCount');
+        const errorElement = document.getElementById('errorMessage');
+        const searchElement = document.getElementById('trainerName');
+        const newNameElement = document.getElementById('newTrainerName');
+
+        // Escapa texto para evitar inyección de HTML en los nombres
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
+        }
+
+        function showError(message) {
+            errorElement.textContent = message;
+        }
+
+        function clearError() {
+            errorElement.textContent = '';
+        }
+
+        // Trae todos los entrenadores desde la API
+        async function loadTrainers() {
+            clearError();
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('request-failed');
+                }
+                allTrainers = await response.json();
+                render();
+            } catch (error) {
+                console.error('No se pudo cargar la lista de entrenadores:', error);
+                showError('No se pudo conectar con la API. ¿Está corriendo en el puerto 3001? (cd api && npm start)');
+                listElement.innerHTML = '';
+                countElement.textContent = '';
+            }
+        }
+
+        // Dibuja la lista aplicando el filtro de búsqueda
+        function render() {
+            const query = searchElement.value.trim().toLowerCase();
+            const filtered = allTrainers.filter(trainer => trainer.name.toLowerCase().includes(query));
+
+            countElement.textContent = `${filtered.length} de ${allTrainers.length} entrenador(es)`;
+
+            if (filtered.length === 0) {
+                listElement.innerHTML = '<li class="empty">Sin resultados.</li>';
+                return;
+            }
+
+            listElement.innerHTML = filtered
+                .map(trainer => `
+                    <li class="trainer-row">
+                        <span class="trainer-id">#${trainer.id}</span>
+                        <span class="trainer-name">${escapeHtml(trainer.name)}</span>
+                        <button class="btn btn-sm btn-danger" data-id="${trainer.id}">Borrar</button>
+                    </li>`)
+                .join('');
+
+            listElement.querySelectorAll('button[data-id]').forEach(button => {
+                button.addEventListener('click', () => deleteTrainer(button.dataset.id));
+            });
+        }
+
+        // Crea un entrenador (POST); el id lo genera la API
+        async function addTrainer(name) {
+            clearError();
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (!response.ok) {
+                    throw new Error('request-failed');
+                }
+                newNameElement.value = '';
+                await loadTrainers();
+            } catch (error) {
+                console.error('No se pudo agregar el entrenador:', error);
+                showError('No se pudo agregar el entrenador.');
+            }
+        }
+
+        // Borra un entrenador (DELETE)
+        async function deleteTrainer(id) {
+            clearError();
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error('request-failed');
+                }
+                await loadTrainers();
+            } catch (error) {
+                console.error('No se pudo borrar el entrenador:', error);
+                showError('No se pudo borrar el entrenador.');
+            }
+        }
+
+        // Eventos
+        searchElement.addEventListener('input', render);
+
+        document.getElementById('addTrainer').addEventListener('click', () => {
+            const name = newNameElement.value.trim();
+            if (name) {
+                addTrainer(name);
+            }
+        });
+
+        newNameElement.addEventListener('keyup', event => {
+            if (event.key === 'Enter') {
+                const name = newNameElement.value.trim();
+                if (name) {
+                    addTrainer(name);
+                }
+            }
+        });
+
+        // Carga inicial
+        loadTrainers();
+    </script>
 </body>
 </html>

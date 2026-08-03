@@ -13,17 +13,15 @@ exports.getTrainerById = (req, res) => {
 
 exports.addTrainer = (req, res) => {
   try {
-    const { id, name, ...rest } = req.body;
+    const { name, ...rest } = req.body;
 
-
-    console.log('ID:', id);
-    console.log('Name:', name);
-    if (!id || !name) {
-      return res.status(400).json({ error: 'Both ID and name are required.' });
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required.' });
     }
 
-    const trainer = trainersService.addTrainer({ id, name, ...rest });
-    res.json(trainer);
+    // El id es opcional: si no viene, el service lo genera
+    const trainer = trainersService.addTrainer({ name, ...rest });
+    res.status(201).json(trainer);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error.' });

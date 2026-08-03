@@ -1,8 +1,11 @@
 //servidor de la API
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Permitir peticiones desde el frontend (corre en otro puerto)
+app.use(cors());
 // Configurar middleware para manejar datos JSON
 app.use(express.json());
 
