@@ -53,10 +53,19 @@ body {
 
 h1 {
     text-align: center;
-    margin-top: 30px;
-    color: #d1c84c;
-    -webkit-text-stroke-width: 1px;
-    -webkit-text-stroke-color: black;
+    margin: 26px 0 6px;
+    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 6vw, 2.8rem);
+    letter-spacing: 0.5px;
+    /* Relleno con degradado dorado */
+    background: linear-gradient(180deg, #fff1a8 0%, #f6cc2e 52%, #e6a817 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #f6cc2e; /* fallback si el navegador no soporta background-clip: text */
+    /* Sombra suave para dar profundidad (reemplaza el contorno negro duro) */
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
 }
 
 
