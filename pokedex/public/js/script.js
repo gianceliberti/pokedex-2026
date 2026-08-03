@@ -102,6 +102,11 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
     // Aplica la estructura HTML al contenedor
     pokemonInfo.innerHTML = pokemonDetailsHTML;
 
+    // Re-dispara la animación de entrada en cada render
+    pokemonInfo.classList.remove('fade-in');
+    void pokemonInfo.offsetWidth; // fuerza un reflow para reiniciar la animación
+    pokemonInfo.classList.add('fade-in');
+
     // Mantiene el buscador en sync con lo que se muestra (nombre canónico)
     const inputElement = document.getElementById('pokemonName');
     if (inputElement) {
