@@ -11,6 +11,9 @@ let activeIndex = -1;
 function runSearch() {
     const pokemonName = searchInput.value.trim();
     if (pokemonName) {
+        if (typeof closeGallery === 'function') {
+            closeGallery();
+        }
         getPokemonByName(pokemonName);
     }
 }
