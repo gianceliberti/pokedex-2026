@@ -338,3 +338,16 @@ async function loadPokemon(identifier) {
 async function getPokemonByName(name) {
     await loadPokemon(name);
 }
+
+// Exponer funciones puras para tests con Jest. En el navegador `module` no
+// existe, así que este bloque se ignora sin afectar nada.
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        capitalizeFirstLetter,
+        formatStatName,
+        calculateTotal,
+        getPokemonStat,
+        idFromSpeciesUrl,
+        getEvolutionLevels,
+    };
+}

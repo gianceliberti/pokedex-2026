@@ -192,3 +192,11 @@ function renderGallery(list) {
 if (galleryToggle) {
     galleryToggle.addEventListener('click', toggleGallery);
 }
+
+// Exponer funciones puras para tests con Jest (ignorado en el navegador).
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        idFromPokemonUrl,
+        buildPageList,
+    };
+}
