@@ -3,28 +3,11 @@
 const searchInput = document.getElementById('pokemonName');
 const autocompleteList = document.getElementById('autocompleteList');
 
-// Lista completa de nombres (para el autocompletado propio) e índice resaltado
+// Lista completa de nombres para el autocompletado (se carga una sola vez)
 let pokemonNames = [];
-let activeIndex = -1;
 
-// Lanza la búsqueda con lo que haya en el input
-function runSearch() {
-    const pokemonName = searchInput.value.trim();
-    if (pokemonName) {
-        if (typeof closeGallery === 'function') {
-            closeGallery();
-        }
-        getPokemonByName(pokemonName);
-    }
-}
-
-// Botón de búsqueda por nombre
-document.getElementById('searchByName').addEventListener('click', () => {
-    closeSuggestions();
-    runSearch();
-});
-
-// ---- Autocompletado propio (reemplaza al <datalist> nativo) ----
+// Cuántas sugerencias mostrar como máximo (para no tapar toda la pantalla)
+const MAX_SUGGESTIONS = 8;
 
 // Carga la lista completa de nombres una sola vez
 async function loadPokemonNames() {
@@ -40,100 +23,127 @@ async function loadPokemonNames() {
     }
 }
 
-// Cuántas sugerencias mostrar como máximo (para no tapar toda la pantalla)
-const MAX_SUGGESTIONS = 8;
+// Autocompletado reutilizable: se engancha a un input + su desplegable.
+// onSelect(name) se llama al elegir una sugerencia o confirmar con Enter.
+function setupAutocomplete(input, listElement, onSelect) {
+    let activeIndex = -1;
 
-// Filtra y dibuja las sugerencias según lo tipeado
-function renderSuggestions(query) {
-    const q = query.trim().toLowerCase();
-    activeIndex = -1;
+    function render(query) {
+        const q = query.trim().toLowerCase();
+        activeIndex = -1;
 
-    if (!q) {
-        closeSuggestions();
-        return;
-    }
-
-    // Primero los que empiezan con la búsqueda; después los que la contienen
-    const startsWith = pokemonNames.filter(name => name.startsWith(q));
-    const contains = pokemonNames.filter(name => name.includes(q) && !name.startsWith(q));
-    const matches = startsWith.concat(contains).slice(0, MAX_SUGGESTIONS);
-
-    if (matches.length === 0) {
-        closeSuggestions();
-        return;
-    }
-
-    autocompleteList.innerHTML = matches
-        .map(name => `<div class="autocomplete-item" role="option" data-name="${name}">${name}</div>`)
-        .join('');
-    autocompleteList.classList.add('open');
-}
-
-// Cierra el desplegable
-function closeSuggestions() {
-    autocompleteList.innerHTML = '';
-    autocompleteList.classList.remove('open');
-    activeIndex = -1;
-}
-
-// Selecciona una sugerencia: completa el input y busca
-function selectSuggestion(name) {
-    searchInput.value = name;
-    closeSuggestions();
-    getPokemonByName(name);
-}
-
-// Resalta visualmente la sugerencia activa (navegación con teclado)
-function updateActiveItem(items) {
-    items.forEach((item, index) => item.classList.toggle('active', index === activeIndex));
-    if (items[activeIndex]) {
-        items[activeIndex].scrollIntoView({ block: 'nearest' });
-    }
-}
-
-// Mientras se escribe, refrescamos las sugerencias
-searchInput.addEventListener('input', () => renderSuggestions(searchInput.value));
-
-// Teclado: flechas para navegar, Enter para elegir/buscar, Escape para cerrar
-searchInput.addEventListener('keydown', (event) => {
-    const items = Array.from(autocompleteList.querySelectorAll('.autocomplete-item'));
-
-    if (event.key === 'ArrowDown' && items.length) {
-        event.preventDefault();
-        activeIndex = (activeIndex + 1) % items.length;
-        updateActiveItem(items);
-    } else if (event.key === 'ArrowUp' && items.length) {
-        event.preventDefault();
-        activeIndex = (activeIndex - 1 + items.length) % items.length;
-        updateActiveItem(items);
-    } else if (event.key === 'Enter') {
-        event.preventDefault();
-        if (activeIndex >= 0 && items[activeIndex]) {
-            selectSuggestion(items[activeIndex].dataset.name);
-        } else {
-            closeSuggestions();
-            runSearch();
+        if (!q) {
+            close();
+            return;
         }
-    } else if (event.key === 'Escape') {
-        closeSuggestions();
+
+        // Primero los que empiezan con la búsqueda; después los que la contienen
+        const startsWith = pokemonNames.filter(name => name.startsWith(q));
+        const contains = pokemonNames.filter(name => name.includes(q) && !name.startsWith(q));
+        const matches = startsWith.concat(contains).slice(0, MAX_SUGGESTIONS);
+
+        if (matches.length === 0) {
+            close();
+            return;
+        }
+
+        listElement.innerHTML = matches
+            .map(name => `<div class="autocomplete-item" role="option" data-name="${name}">${name}</div>`)
+            .join('');
+        listElement.classList.add('open');
     }
+
+    function close() {
+        listElement.innerHTML = '';
+        listElement.classList.remove('open');
+        activeIndex = -1;
+    }
+
+    function choose(name) {
+        input.value = name;
+        close();
+        onSelect(name);
+    }
+
+    function updateActiveItem(items) {
+        items.forEach((item, index) => item.classList.toggle('active', index === activeIndex));
+        if (items[activeIndex]) {
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    input.addEventListener('input', () => render(input.value));
+
+    // Teclado: flechas para navegar, Enter para elegir/confirmar, Escape para cerrar
+    input.addEventListener('keydown', (event) => {
+        const items = Array.from(listElement.querySelectorAll('.autocomplete-item'));
+
+        if (event.key === 'ArrowDown' && items.length) {
+            event.preventDefault();
+            activeIndex = (activeIndex + 1) % items.length;
+            updateActiveItem(items);
+        } else if (event.key === 'ArrowUp' && items.length) {
+            event.preventDefault();
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+            updateActiveItem(items);
+        } else if (event.key === 'Enter') {
+            event.preventDefault();
+            if (activeIndex >= 0 && items[activeIndex]) {
+                choose(items[activeIndex].dataset.name);
+            } else {
+                close();
+                const value = input.value.trim();
+                if (value) {
+                    onSelect(value);
+                }
+            }
+        } else if (event.key === 'Escape') {
+            close();
+        }
+    });
+
+    // Click en una sugerencia (mousedown para adelantarse al blur del input)
+    listElement.addEventListener('mousedown', (event) => {
+        const item = event.target.closest('.autocomplete-item');
+        if (!item) {
+            return;
+        }
+        event.preventDefault();
+        choose(item.dataset.name);
+    });
+
+    return { close };
+}
+
+// Cierra cualquier desplegable abierto al hacer click fuera de su wrapper
+document.addEventListener('click', (event) => {
+    document.querySelectorAll('.autocomplete-list.open').forEach(listElement => {
+        const wrapper = listElement.closest('.autocomplete-wrapper');
+        if (wrapper && !wrapper.contains(event.target)) {
+            listElement.innerHTML = '';
+            listElement.classList.remove('open');
+        }
+    });
 });
 
-// Click en una sugerencia (mousedown para adelantarse al blur del input)
-autocompleteList.addEventListener('mousedown', (event) => {
-    const item = event.target.closest('.autocomplete-item');
-    if (!item) {
+// Busca por nombre (la usan el botón y el autocompletado del buscador principal)
+function searchPokemon(name) {
+    const value = (name || '').trim();
+    if (!value) {
         return;
     }
-    event.preventDefault();
-    selectSuggestion(item.dataset.name);
-});
-
-// Cierra el desplegable al hacer click fuera del buscador
-document.addEventListener('click', (event) => {
-    if (!event.target.closest('.autocomplete-wrapper')) {
-        closeSuggestions();
+    if (typeof closeGallery === 'function') {
+        closeGallery();
     }
+    getPokemonByName(value);
+}
+
+// Autocompletado del buscador principal
+setupAutocomplete(searchInput, autocompleteList, searchPokemon);
+
+// Botón de búsqueda
+document.getElementById('searchByName').addEventListener('click', () => {
+    searchPokemon(searchInput.value);
 });
 
 loadPokemonNames();

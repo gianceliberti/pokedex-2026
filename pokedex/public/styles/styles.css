@@ -534,6 +534,169 @@ img {
     opacity: 0.8;
 }
 
+/* ===== Comparador de stats ===== */
+.compare-box {
+    margin-top: 20px;
+    border-top: 1px dashed #cfd8dc;
+    padding-top: 15px;
+}
+
+.compare-box label {
+    display: block;
+    text-align: center;
+    font-weight: bold;
+    color: #34495e;
+    margin-bottom: 8px;
+}
+
+.compare-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.compare-ac {
+    flex: 1;
+    max-width: 240px;
+}
+
+#compareInput {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.6);
+    color: inherit;
+    font-size: 14px;
+}
+
+#compareBtn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: #e67e22;
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#compareBtn:hover {
+    background-color: #cf6d16;
+}
+
+#comparison {
+    margin-top: 14px;
+}
+
+.cmp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.cmp-header .cmp-vs {
+    color: #7f8c8d;
+    font-weight: normal;
+}
+
+.cmp-header .cmp-a {
+    color: #2980b9;
+}
+
+.cmp-header .cmp-b {
+    color: #e67e22;
+}
+
+.cmp-row {
+    display: grid;
+    grid-template-columns: 42px 1fr 42px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.cmp-val {
+    text-align: center;
+    font-size: 14px;
+    color: #555555;
+}
+
+.cmp-val.win {
+    font-weight: bold;
+    color: #27ae60;
+}
+
+.cmp-mid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cmp-stat {
+    text-align: center;
+    font-size: 11px;
+    color: #7f8c8d;
+}
+
+.cmp-bar-track {
+    height: 6px;
+    background-color: rgba(0, 0, 0, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.cmp-bar {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.cmp-bar-a {
+    background-color: #6ab0e0;
+}
+
+.cmp-bar-b {
+    background-color: #f0b27a;
+}
+
+.cmp-bar-a.win {
+    background-color: #2980b9;
+}
+
+.cmp-bar-b.win {
+    background-color: #e67e22;
+}
+
+.cmp-total {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 6px;
+    margin-top: 4px;
+}
+
+.cmp-total .cmp-stat {
+    font-weight: bold;
+    color: #34495e;
+}
+
+.cmp-summary {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #34495e;
+}
+
+.cmp-loading,
+.cmp-error {
+    text-align: center;
+    padding: 8px;
+    color: #7f8c8d;
+}
+
+.cmp-error {
+    color: #e74c3c;
+}
+
 /* ===================== Modo oscuro ===================== */
 /* Panel oscuro translúcido hecho a propósito, en lugar de que el navegador
    invierta el blanco a negro de forma cruda. */
@@ -655,5 +818,37 @@ img {
     .gallery-jump input {
         border-color: rgba(255, 255, 255, 0.2);
         background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Comparador en oscuro */
+    .compare-box {
+        border-top-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .compare-box label,
+    .cmp-summary,
+    .cmp-total .cmp-stat {
+        color: #cfd6dd;
+    }
+
+    #compareInput {
+        border-color: rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .cmp-val {
+        color: #b0b8c0;
+    }
+
+    .cmp-stat {
+        color: #9aa0a6;
+    }
+
+    .cmp-bar-track {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .cmp-total {
+        border-top-color: rgba(255, 255, 255, 0.12);
     }
 }

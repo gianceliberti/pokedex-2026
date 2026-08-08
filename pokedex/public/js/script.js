@@ -1,6 +1,21 @@
 // Guarda el número del Pokémon mostrado, para la navegación anterior/siguiente
 let currentPokemonId = null;
 
+// Guarda el Pokémon mostrado (nombre + stats), para la comparación
+let currentPokemonData = null;
+
+// Extrae las estadísticas base de una respuesta de PokéAPI
+function extractBaseStats(pokemon) {
+    return {
+        hp: getPokemonStat(pokemon, 'hp'),
+        ataque: getPokemonStat(pokemon, 'attack'),
+        defensa: getPokemonStat(pokemon, 'defense'),
+        ataqueEspecial: getPokemonStat(pokemon, 'special-attack'),
+        defensaEspecial: getPokemonStat(pokemon, 'special-defense'),
+        velocidad: getPokemonStat(pokemon, 'speed'),
+    };
+}
+
 // Función para mostrar la información del Pokémon en el HTML
 function displayPokemonInfo(pokemon, imageUrl, baseStats) {
     clearErrorMessage();
@@ -89,6 +104,17 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
             ${statsList}
             <li>Total: ${calculateTotal(baseStats)}</li>
         </ul>
+        <div class="compare-box">
+            <label for="compareInput">⚔️ Comparar stats con:</label>
+            <div class="compare-controls">
+                <div class="autocomplete-wrapper compare-ac">
+                    <input type="text" id="compareInput" placeholder="Ej: arcanine" autocomplete="off" />
+                    <div id="compareAcList" class="autocomplete-list"></div>
+                </div>
+                <button id="compareBtn" type="button">Comparar</button>
+            </div>
+            <div id="comparison"></div>
+        </div>
         <div id="evolutionChain" class="evolution-chain">
             <p class="evolution-title">Evolución</p>
             <p class="evolution-none">Cargando…</p>
@@ -141,6 +167,100 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
     if (nextButton) {
         nextButton.addEventListener('click', () => loadPokemon(pokemon.id + 1));
     }
+
+    // Comparación de stats con otro Pokémon (mismo autocompletado que el buscador principal)
+    const compareButton = document.getElementById('compareBtn');
+    const compareInput = document.getElementById('compareInput');
+    const compareAcList = document.getElementById('compareAcList');
+    if (compareInput && compareAcList && typeof setupAutocomplete === 'function') {
+        setupAutocomplete(compareInput, compareAcList, name => compareWith(name));
+    }
+    if (compareButton && compareInput) {
+        compareButton.addEventListener('click', () => {
+            const name = compareInput.value.trim();
+            if (name) {
+                compareWith(name);
+            }
+        });
+    }
+}
+
+// Trae otro Pokémon y compara sus stats con el que se está mostrando
+async function compareWith(name) {
+    const comparisonElement = document.getElementById('comparison');
+    if (!comparisonElement || !currentPokemonData) {
+        return;
+    }
+
+    comparisonElement.innerHTML = '<p class="cmp-loading">Comparando…</p>';
+
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+        if (!response.ok) {
+            throw new Error('not-found');
+        }
+        const other = await response.json();
+        const otherData = { name: other.name, baseStats: extractBaseStats(other) };
+        renderComparison(currentPokemonData, otherData);
+    } catch (error) {
+        comparisonElement.innerHTML = `<p class="cmp-error">No se encontró "${name}". Revisá el nombre.</p>`;
+    }
+}
+
+// Dibuja la comparación stat por stat (con barras y resaltando al ganador)
+function renderComparison(a, b) {
+    const comparisonElement = document.getElementById('comparison');
+    const statKeys = ['hp', 'ataque', 'defensa', 'ataqueEspecial', 'defensaEspecial', 'velocidad'];
+    const MAX_STAT = 200; // referencia para el largo de las barras
+
+    let aWins = 0;
+    let bWins = 0;
+
+    const rows = statKeys
+        .map(key => {
+            const av = a.baseStats[key] || 0;
+            const bv = b.baseStats[key] || 0;
+            const aClass = av > bv ? ' win' : '';
+            const bClass = bv > av ? ' win' : '';
+            if (av > bv) aWins++;
+            else if (bv > av) bWins++;
+
+            const aPct = Math.min(100, (av / MAX_STAT) * 100);
+            const bPct = Math.min(100, (bv / MAX_STAT) * 100);
+
+            return `
+                <div class="cmp-row">
+                    <span class="cmp-val cmp-a${aClass}">${av}</span>
+                    <div class="cmp-mid">
+                        <div class="cmp-stat">${formatStatName(key)}</div>
+                        <div class="cmp-bar-track cmp-track-a"><div class="cmp-bar cmp-bar-a${aClass}" style="width:${aPct}%"></div></div>
+                        <div class="cmp-bar-track cmp-track-b"><div class="cmp-bar cmp-bar-b${bClass}" style="width:${bPct}%"></div></div>
+                    </div>
+                    <span class="cmp-val cmp-b${bClass}">${bv}</span>
+                </div>`;
+        })
+        .join('');
+
+    const aTotal = calculateTotal(a.baseStats);
+    const bTotal = calculateTotal(b.baseStats);
+    const nameA = capitalizeFirstLetter(a.name);
+    const nameB = capitalizeFirstLetter(b.name);
+    const totalWinner = aTotal === bTotal ? 'Empate' : (aTotal > bTotal ? nameA : nameB);
+
+    comparisonElement.innerHTML = `
+        <div class="cmp-header">
+            <span class="cmp-name cmp-a">${nameA}</span>
+            <span class="cmp-vs">vs</span>
+            <span class="cmp-name cmp-b">${nameB}</span>
+        </div>
+        ${rows}
+        <div class="cmp-row cmp-total">
+            <span class="cmp-val cmp-a${aTotal > bTotal ? ' win' : ''}">${aTotal}</span>
+            <div class="cmp-mid"><div class="cmp-stat">Total</div></div>
+            <span class="cmp-val cmp-b${bTotal > aTotal ? ' win' : ''}">${bTotal}</span>
+        </div>
+        <p class="cmp-summary">${nameA} gana ${aWins} · ${nameB} gana ${bWins} · Total: <strong>${totalWinner}</strong></p>
+    `;
 }
 
 // Función para capitalizar la primera letra de cada palabra
@@ -310,14 +430,10 @@ async function loadPokemon(identifier) {
         const imageUrl = pokemon.sprites?.other?.['official-artwork']?.front_default || pokemon.sprites?.front_default;
 
         // Estadísticas base a partir de la misma respuesta (sin una segunda llamada a la API)
-        const baseStats = {
-            hp: getPokemonStat(pokemon, 'hp'),
-            ataque: getPokemonStat(pokemon, 'attack'),
-            defensa: getPokemonStat(pokemon, 'defense'),
-            ataqueEspecial: getPokemonStat(pokemon, 'special-attack'),
-            defensaEspecial: getPokemonStat(pokemon, 'special-defense'),
-            velocidad: getPokemonStat(pokemon, 'speed'),
-        };
+        const baseStats = extractBaseStats(pokemon);
+
+        // Guarda el Pokémon actual para poder compararlo con otro
+        currentPokemonData = { name: pokemon.name, baseStats };
 
         displayPokemonInfo(pokemon, imageUrl, baseStats);
 
