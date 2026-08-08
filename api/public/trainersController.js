@@ -1,26 +1,36 @@
 const trainersService = require('./trainersService');
 
 // Controladores para operaciones CRUD
-exports.getTrainers = (req, res) => {
-  const trainers = trainersService.getTrainers();
-  res.json(trainers);
-};
 
-exports.getTrainerById = (req, res) => {
-  const trainer = trainersService.getTrainerById(parseInt(req.params.id));
-  res.json(trainer);
-};
-
-exports.addTrainer = (req, res) => {
+exports.getTrainers = async (req, res) => {
   try {
-    const { name, ...rest } = req.body;
+    const trainers = await trainersService.getTrainers();
+    res.json(trainers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.getTrainerById = async (req, res) => {
+  try {
+    const trainer = await trainersService.getTrainerById(parseInt(req.params.id));
+    res.json(trainer);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.addTrainer = async (req, res) => {
+  try {
+    const { name } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Name is required.' });
     }
 
-    // El id es opcional: si no viene, el service lo genera
-    const trainer = trainersService.addTrainer({ name, ...rest });
+    const trainer = await trainersService.addTrainer({ name });
     res.status(201).json(trainer);
   } catch (error) {
     console.error(error);
@@ -28,13 +38,10 @@ exports.addTrainer = (req, res) => {
   }
 };
 
-
-exports.updateTrainer = (req, res) => {
+exports.updateTrainer = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedTrainerData = req.body;
-
-    const updatedTrainer = trainersService.updateTrainer(id, updatedTrainerData);
+    const updatedTrainer = await trainersService.updateTrainer(id, req.body);
 
     if (!updatedTrainer) {
       return res.status(404).json({ error: 'Trainer not found.' });
@@ -47,11 +54,10 @@ exports.updateTrainer = (req, res) => {
   }
 };
 
-exports.deleteTrainer = (req, res) => {
+exports.deleteTrainer = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const deletedTrainer = trainersService.deleteTrainer(id);
+    const deletedTrainer = await trainersService.deleteTrainer(id);
 
     if (!deletedTrainer) {
       return res.status(404).json({ error: 'Trainer not found.' });

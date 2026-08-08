@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    container_name: pokemon-trainers-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pokemon
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persiste los datos entre reinicios del contenedor
+      - pgdata:/var/lib/postgresql/data
+      # Crea la tabla y siembra los entrenadores la primera vez
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:

@@ -1,60 +1,70 @@
-// Tests unitarios de la lógica de negocio (trainersService)
+// Tests unitarios del service, con la conexión a la DB mockeada
+// (no hace falta un Postgres corriendo para pasar estos tests).
+jest.mock('../db/database', () => ({ query: jest.fn() }));
 
-describe('trainersService', () => {
-  let service;
+const pool = require('../db/database');
+const service = require('../public/trainersService');
 
-  // resetModules + require fresco => cada test parte de la data inicial [Red, Blue]
+describe('trainersService (DB mockeada)', () => {
   beforeEach(() => {
-    jest.resetModules();
-    service = require('../public/trainersService');
+    jest.clearAllMocks();
   });
 
-  test('getTrainers devuelve la lista inicial', () => {
-    expect(service.getTrainers()).toEqual([
-      { id: 1, name: 'Red' },
-      { id: 2, name: 'Blue' },
-    ]);
+  test('getTrainers hace SELECT y devuelve las filas', async () => {
+    pool.query.mockResolvedValue({ rows: [{ id: 1, name: 'Red' }, { id: 2, name: 'Blue' }] });
+
+    const trainers = await service.getTrainers();
+
+    expect(trainers).toEqual([{ id: 1, name: 'Red' }, { id: 2, name: 'Blue' }]);
+    expect(pool.query).toHaveBeenCalledWith('SELECT * FROM trainers ORDER BY id');
   });
 
-  test('getTrainerById encuentra un entrenador por id', () => {
-    expect(service.getTrainerById(1)).toEqual({ id: 1, name: 'Red' });
+  test('getTrainerById busca por id', async () => {
+    pool.query.mockResolvedValue({ rows: [{ id: 1, name: 'Red' }] });
+
+    const trainer = await service.getTrainerById(1);
+
+    expect(trainer).toEqual({ id: 1, name: 'Red' });
+    expect(pool.query).toHaveBeenCalledWith('SELECT * FROM trainers WHERE id = $1', [1]);
   });
 
-  test('getTrainerById devuelve undefined si no existe', () => {
-    expect(service.getTrainerById(999)).toBeUndefined();
-  });
+  test('addTrainer inserta y devuelve el nuevo entrenador', async () => {
+    pool.query.mockResolvedValue({ rows: [{ id: 3, name: 'Ash' }] });
 
-  test('addTrainer genera el id automáticamente (max + 1)', () => {
-    const trainer = service.addTrainer({ name: 'Ash' });
+    const trainer = await service.addTrainer({ name: 'Ash' });
+
     expect(trainer).toEqual({ id: 3, name: 'Ash' });
-    expect(service.getTrainers()).toHaveLength(3);
+    expect(pool.query).toHaveBeenCalledWith(
+      'INSERT INTO trainers (name) VALUES ($1) RETURNING *',
+      ['Ash']
+    );
   });
 
-  test('addTrainer respeta un id explícito si se pasa', () => {
-    const trainer = service.addTrainer({ id: 50, name: 'Gary' });
-    expect(trainer.id).toBe(50);
+  test('addTrainer lanza error si falta el nombre (sin tocar la DB)', async () => {
+    await expect(service.addTrainer({})).rejects.toThrow('Name is required.');
+    expect(pool.query).not.toHaveBeenCalled();
   });
 
-  test('addTrainer lanza error si falta el nombre', () => {
-    expect(() => service.addTrainer({})).toThrow('Name is required.');
-  });
+  test('updateTrainer actualiza y devuelve el entrenador', async () => {
+    pool.query.mockResolvedValue({ rows: [{ id: 1, name: 'Red Updated' }] });
 
-  test('updateTrainer actualiza un entrenador existente', () => {
-    const updated = service.updateTrainer(1, { name: 'Red Updated' });
+    const updated = await service.updateTrainer(1, { name: 'Red Updated' });
+
     expect(updated).toEqual({ id: 1, name: 'Red Updated' });
   });
 
-  test('updateTrainer devuelve null si el entrenador no existe', () => {
-    expect(service.updateTrainer(999, { name: 'Nadie' })).toBeNull();
+  test('updateTrainer devuelve null si no existe', async () => {
+    pool.query.mockResolvedValue({ rows: [] });
+    expect(await service.updateTrainer(999, { name: 'Nadie' })).toBeNull();
   });
 
-  test('deleteTrainer elimina y devuelve el entrenador', () => {
-    const deleted = service.deleteTrainer(2);
-    expect(deleted).toEqual({ id: 2, name: 'Blue' });
-    expect(service.getTrainers()).toHaveLength(1);
+  test('deleteTrainer elimina y devuelve el entrenador', async () => {
+    pool.query.mockResolvedValue({ rows: [{ id: 2, name: 'Blue' }] });
+    expect(await service.deleteTrainer(2)).toEqual({ id: 2, name: 'Blue' });
   });
 
-  test('deleteTrainer devuelve null si el entrenador no existe', () => {
-    expect(service.deleteTrainer(999)).toBeNull();
+  test('deleteTrainer devuelve null si no existe', async () => {
+    pool.query.mockResolvedValue({ rows: [] });
+    expect(await service.deleteTrainer(999)).toBeNull();
   });
 });
