@@ -697,6 +697,86 @@ img {
     color: #e74c3c;
 }
 
+/* ===== Sets competitivos (Smogon) ===== */
+.competitive {
+    margin-top: 20px;
+    border-top: 1px dashed #cfd8dc;
+    padding-top: 15px;
+    text-align: left;
+}
+
+.competitive-title {
+    font-weight: bold;
+    color: #34495e;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.comp-block {
+    margin-bottom: 14px;
+}
+
+.comp-format {
+    font-weight: bold;
+    color: #e67e22;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.comp-set {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
+.comp-set-name {
+    font-weight: bold;
+    color: #2980b9;
+    margin-bottom: 5px;
+}
+
+.comp-set-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 12px;
+    font-size: 13px;
+    color: #34495e;
+    margin-bottom: 7px;
+}
+
+.comp-moves {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 12px;
+}
+
+.comp-move {
+    position: relative;
+    padding-left: 12px;
+    font-size: 13px;
+    color: #444444;
+}
+
+.comp-move::before {
+    content: '•';
+    position: absolute;
+    left: 2px;
+    color: #e67e22;
+}
+
+.comp-none {
+    color: #7f8c8d;
+    font-size: 13px;
+}
+
+.comp-credit {
+    text-align: center;
+    font-size: 11px;
+    color: #95a5a6;
+    margin-top: 8px;
+}
+
 /* ===================== Modo oscuro ===================== */
 /* Panel oscuro translúcido hecho a propósito, en lugar de que el navegador
    invierta el blanco a negro de forma cruda. */
@@ -850,5 +930,26 @@ img {
 
     .cmp-total {
         border-top-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Sets competitivos en oscuro */
+    .competitive {
+        border-top-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .competitive-title {
+        color: #cfd6dd;
+    }
+
+    .comp-set {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .comp-set-meta {
+        color: #cfd6dd;
+    }
+
+    .comp-move {
+        color: #c8cdd3;
     }
 }

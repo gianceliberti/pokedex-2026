@@ -119,6 +119,7 @@ function displayPokemonInfo(pokemon, imageUrl, baseStats) {
             <p class="evolution-title">Evolución</p>
             <p class="evolution-none">Cargando…</p>
         </div>
+        <div id="competitive" class="competitive"></div>
         <div class="pokemon-nav">
             <button id="prevPokemon" ${pokemon.id <= 1 ? 'disabled' : ''}>◀ Anterior</button>
             <button id="nextPokemon">Siguiente ▶</button>
@@ -439,6 +440,11 @@ async function loadPokemon(identifier) {
 
         // La evolución se carga aparte y se completa cuando llega (no bloquea la ficha)
         loadEvolutionChain(pokemon);
+
+        // Los sets competitivos (Smogon) también se cargan aparte
+        if (typeof loadCompetitiveSets === 'function') {
+            loadCompetitiveSets(pokemon.name);
+        }
     } catch (error) {
         clearPokemonInfo();
         if (error.message === 'not-found') {
