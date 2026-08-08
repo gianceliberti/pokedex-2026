@@ -13,7 +13,11 @@ app.use(express.json());
 const trainersRouter = require('./public/trainersRouter');
 app.use('/api/trainers', trainersRouter);
 
-// Servidor escuchando en el puerto
-app.listen(port, () => {
-  console.log(`Servidor de la API en http://localhost:${port}`);
-});
+// Solo levanta el servidor al ejecutarse directamente (no al importarlo en los tests)
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Servidor de la API en http://localhost:${port}`);
+  });
+}
+
+module.exports = app;
