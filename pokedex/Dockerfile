@@ -1,7 +1,7 @@
 # Dockerfile
 
 # Usa una imagen base de Node.js
-FROM node:14
+FROM node:22-alpine
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app
